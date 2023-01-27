@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
+/////////////////
+/// ! WARNING ///
+/////////////////
+
+/// The purpose of this contract is to test front-running attacks.
+
+/// @title Hash
+/// @author mektigboy
 contract Hash {
     //////////////
     /// ERRORS ///
@@ -46,15 +54,29 @@ contract Hash {
 
     function solve(string memory _hash) external {
         assembly {
-            let hash := _hash
+            // In assembly `_hash` is just a pointer to the string.
+            // It represents the address in memory where the data for our string starts.
 
+            // At `_hash` we have the length of the string.
+            // Here we get the size of the string.
+            let stringSize := mload(_hash)
+
+            // At `_hash` + 32 we have the string itself.
+            // Here we add 32 to that address, so that we have the address of the string itself.
+            let stringAddress := add(_hash, 32)
+
+            // We then pass the address of the string, and its size. This will hash our string.
+            let hash := keccak256(stringAddress, stringSize)
+
+            // We compare `HASH` with `hash`, if they are not equal we will revert with custom error.
+            // If they are equal we will send all the ETH stored in this contract.
             switch eq(HASH, hash)
             case 0 {
                 mstore(0x00, ERROR__INVALID_HASH)
                 revert(0x1c, 0x04)
             }
             default {
-                let success := call(gas(), caller(), address(), 0, 0, 0, 0)
+                let success := call(gas(), caller(), selfbalance(), 0, 0, 0, 0)
 
                 if iszero(success) {
                     mstore(0x00, ERROR__ETH_TRANSFER_FAILED)
@@ -72,5 +94,9 @@ contract Hash {
 
     function hash() external pure returns (bytes32) {
         return HASH;
+    }
+
+    function balance() external view returns (uint256) {
+        return address(this).balance;
     }
 }
