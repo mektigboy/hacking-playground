@@ -17,32 +17,32 @@ contract CFRVaultFixed is CFRGuard {
     /// STORAGE ///
     ///////////////
 
-    mapping(address user => uint256 balance) public userBalance;
+    mapping(address account => uint256 balance) public balances;
 
     //////////////////////
     /// EXTERNAL LOGIC ///
     //////////////////////
 
     function deposit() external payable {
-        userBalance[msg.sender] += msg.value;
+        balances[msg.sender] += msg.value;
     }
 
     function transfer(address _to, uint256 _amount) external {
-        if (userBalance[msg.sender] >= _amount) {
-            userBalance[_to] += _amount;
-            userBalance[msg.sender] -= _amount;
+        if (balances[msg.sender] >= _amount) {
+            balances[_to] += _amount;
+            balances[msg.sender] -= _amount;
         }
     }
 
     function withdrawAll() external nonReentrant {
-        uint256 balanceUser = userBalance[msg.sender];
+        uint256 accountBalance = balances[msg.sender];
 
-        if (balanceUser == 0) revert CFRVault__InsufficientBalance();
+        if (accountBalance == 0) revert CFRVault__InsufficientBalance();
 
-        userBalance[msg.sender] = 0;
+        balances[msg.sender] = 0;
 
-        (bool success, ) = msg.sender.call{value: balanceUser}("");
-
+        (bool success, ) = msg.sender.call{value: accountBalance}("");
+        
         if (!success) revert CFRVault__ETHTransferFailed();
     }
 

